@@ -1,0 +1,178 @@
+.global add64
+.global sub64
+.global minU8
+.global minS8
+.global isLessThanU32
+.global isLessThanS32
+.global shiftLeftU32
+.global shiftU32
+.global shiftS32
+.global isEqualU16
+.global isEqualS16
+.global strCopy
+.global strConcat
+
+.text
+
+add64:
+    ADDS R0,R0,R2
+    ADC R1, R1, R3
+    BX LR
+
+sub64:
+    SUBS R0,R0,R2
+    SBC R1, R1, R3
+    BX LR
+
+minU8:
+    PUSH {R0}
+    PUSH {R1}
+    CMP R0, R1
+    BMI LAST
+    POP {R0}
+    BX LR
+    LAST:
+    POP {R1}
+    BX LR
+
+minS8:
+    PUSH {R0}
+    PUSH {R1}
+    CMP R0, R1
+    BMI NOT
+    POP {R0}
+    BX LR
+    NOT:
+    POP {R1}
+    BX LR
+
+isLessThanU32:
+    CMP R0, R1
+    MOV R0, #1
+    BMI END
+    MOV R0, #0
+    END:
+    BX LR
+
+isLessThanS32:
+    CMP R0, R1
+    MOV R0, #1
+    BMI SKIP
+    MOV R0, #0
+    SKIP:
+    BX LR
+
+
+
+shiftLeftU32:
+    MOV R0, R0, LSL R1
+    BX LR
+
+shiftU32:
+    PUSH {R1}
+    CMP R1, #0
+    BMI JUMP
+    POP {R1}
+    MOV R0,R0, LSL R1
+    BX LR
+    JUMP:
+    POP {R1}
+    SUB R1, #0
+    NEG R1, R1
+    MOV R0, R0, LSR R1
+    BX LR
+
+shiftS32:
+    PUSH {R0}
+    CMP R0, #0
+    BMI NXT
+    PUSH {R1}
+    CMP R1, #0
+    BMI NXTS
+    POP {R1}
+    MOV R0, R0, LSL R1
+    BX LR
+
+    NXTS:
+    POP {R1}
+    SUB R1, #0
+    NEG R1, R1
+    MOV R0, R0, LSR R1
+    BX LR
+
+    NXT:
+    PUSH {R1}
+    CMP R1, #0
+    BMI NEGS
+    POP {R1}
+    MOV R0, R0, LSL R1
+    BX LR
+
+    NEGS:
+    POP {R1}
+    SUB R1, #0
+    NEG R1, R1
+    MOV R0, R0, ASR R1
+    BX LR
+
+isEqualU16:
+    CMP R0, R1
+    BEQ EQS
+    MOV R0, #0
+    BX LR
+    EQS:
+    MOV R0, #1
+    BX LR
+
+isEqualS16:
+    CMP R0, R1
+    BEQ ENDS
+    MOV R0, #0
+    BX LR
+    ENDS:
+    MOV R0, #1
+    BX LR
+
+strCopy:
+    MOV R2, R1
+    loop1:
+    LDRB R3, [R2]
+    CMP R3, #0
+    BEQ TOT
+    BNE loop2
+    TOT:
+    BX LR
+    loop2:
+    ADD R2, #1
+    STRB R3, [R0]
+    ADD R0,#1
+    B loop1
+
+strConcat:
+    MOV R2, R0
+    MOV R3, R1
+
+    LOOPS:
+
+    LDRB R1, [R2]
+    ADD R2, #1
+    CMP R1, #0
+    BEQ Loop
+    STRB R1, [R0]
+    ADD R0, #1
+    B LOOPS
+
+    Loop:
+
+    PUSH {R4}
+    LDRB R4, [R3]
+    ADD R3, #1
+    CMP R4, #0
+    BEQ FINAL
+    STRB R4, [R0]
+    ADD R0, #1
+    B Loop
+
+    FINAL:
+    POP {R4}
+    BX LR
